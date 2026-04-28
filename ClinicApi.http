@@ -1,0 +1,109 @@
+@host = http://localhost:5000
+
+### Get all appointments
+GET {{host}}/api/appointments
+
+### Filter by status
+GET {{host}}/api/appointments?status=Scheduled
+
+### Filter by patient last name
+GET {{host}}/api/appointments?patientLastName=Kowalska
+
+### Filter by both
+GET {{host}}/api/appointments?status=Scheduled&patientLastName=Kowalska
+
+### Get one existing appointment
+GET {{host}}/api/appointments/1
+
+### 404 for non-existing appointment
+GET {{host}}/api/appointments/9999
+
+### Create a valid appointment (success — 201 Created)
+POST {{host}}/api/appointments
+Content-Type: application/json
+
+{
+  "idPatient": 1,
+  "idDoctor": 2,
+  "appointmentDate": "2030-05-20T10:30:00",
+  "reason": "Control visit"
+}
+
+### Create in the past — expect 400 Bad Request
+POST {{host}}/api/appointments
+Content-Type: application/json
+
+{
+  "idPatient": 1,
+  "idDoctor": 2,
+  "appointmentDate": "2020-01-01T10:00:00",
+  "reason": "Past test"
+}
+
+### Create with empty reason — expect 400 Bad Request
+POST {{host}}/api/appointments
+Content-Type: application/json
+
+{
+  "idPatient": 1,
+  "idDoctor": 2,
+  "appointmentDate": "2030-05-20T11:00:00",
+  "reason": ""
+}
+
+### Create with inactive patient (Piotr Wisniewski, IdPatient=4) — expect 400
+POST {{host}}/api/appointments
+Content-Type: application/json
+
+{
+  "idPatient": 4,
+  "idDoctor": 1,
+  "appointmentDate": "2030-05-21T09:00:00",
+  "reason": "Should fail — patient inactive"
+}
+
+### Create conflict — same doctor, same time as a previously scheduled one — expect 409
+POST {{host}}/api/appointments
+Content-Type: application/json
+
+{
+  "idPatient": 2,
+  "idDoctor": 2,
+  "appointmentDate": "2030-05-20T10:30:00",
+  "reason": "Conflict test"
+}
+
+### Update — 200 OK
+PUT {{host}}/api/appointments/1
+Content-Type: application/json
+
+{
+  "idPatient": 1,
+  "idDoctor": 1,
+  "appointmentDate": "2030-05-22T12:00:00",
+  "status": "Scheduled",
+  "reason": "Rescheduled cardiology consultation",
+  "internalNotes": "Patient asked for a later hour."
+}
+
+### Update non-existing — expect 404
+PUT {{host}}/api/appointments/9999
+Content-Type: application/json
+
+{
+  "idPatient": 1,
+  "idDoctor": 1,
+  "appointmentDate": "2030-05-22T12:00:00",
+  "status": "Scheduled",
+  "reason": "Will not happen",
+  "internalNotes": null
+}
+
+### Delete a Scheduled appointment — expect 204 No Content
+DELETE {{host}}/api/appointments/2
+
+### Delete non-existing — expect 404
+DELETE {{host}}/api/appointments/9999
+
+### Delete a Completed appointment (IdAppointment=4 in seed) — expect 409 Conflict
+DELETE {{host}}/api/appointments/4
